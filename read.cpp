@@ -67,8 +67,15 @@ std::vector<bool> dataToBits(const std::vector<char>& chars) {
 	}
 	return result;
 }
-
-std::string readString(const std::string& dir) {
-	return morseBitsToString(dataToBits(fileToData(dir)));
+/**
+ * returns the binary data from a file
+ */
+std::vector<bool> readBin(const std::string& dir) {
+	return dataToBits(fileToData(dir));
 }
-
+/**
+ * reads from a file and outputs alphanumeric strinng
+ */
+std::string readString(const std::string& dir) {
+	return morseBitsToString(readBin(dir));
+}
