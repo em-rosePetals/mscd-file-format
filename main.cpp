@@ -1,18 +1,28 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #include "morse.hpp"
 /**
  * gets valid directory from user input
  */
 std::string getDir() {
+	// stores the last directory used
+	static std::string cache;
+	// directory
 	std::string dir;
 	bool validIn = false;
 	do {
 		std::cout << "Enter file directory: ";
 		// input
 		std::getline(std::cin, dir);
+		// if user uses last directory
+		if (dir.compare("last") == 0) {
+			// sets the directory to what was in the cache
+			dir = cache;
+			break;
+		}
 		std::fstream file;
 		// opens file, might succeed
 		file.open(dir);
@@ -20,6 +30,7 @@ std::string getDir() {
 		validIn = file.is_open();
 
 	} while (!validIn);
+	cache = dir;
 	std::cout << "Thank you for the directory! \n";
 	return dir;
 }
@@ -34,21 +45,24 @@ std::string getText() {
 	return txt;
 	std::cout << "Thank you for the text! \n";
 }
-const int STOP = 0;
-const int READ = 1;
-const int WRITE = 2;
+/**
+ * represents various operation code
+ */
+enum opcode {
+	STOP, READ, WRITE, READBIN, BAD = -1
+};
 /**
  * gets the proper operation from the user
  */
-int getOp() {
+opcode getOp() {
 	// 0 for non init 1 for read 2 for write
-	int op = -1;
+	opcode op = BAD;
 	// whether or not input is valid
 	bool validIn;
 	// user input
 	std::string input;
 	do {
-		std::cout << "What would you like to do? 'r' for read, 'w' for write and 's' for stop: ";
+		std::cout << "What would you like to do? 'r' for read, 'w' for write, 'b' for read binary and 's' for stop: ";
 		// user input
 		std::getline(std::cin, input);
 		// will be set to false if input is invalid
@@ -65,6 +79,8 @@ int getOp() {
 		} else if (input.compare("s") == 0) {
 			// operation is stop
 			op = STOP;
+		} else if (input.compare("b") == 0) {
+			op = READBIN;
 		} else {
 			validIn = false;
 		}
@@ -77,8 +93,8 @@ int getOp() {
  * writes some text to a file
  */
 void write() {
-	std::string dir = getDir();
-	std::string txt = getText();
+	const std::string dir = getDir();
+	const std::string txt = getText();
 	writeString(txt, dir);
 	std::cout << "Success! \n";
 }
@@ -86,9 +102,28 @@ void write() {
  * reads data from user input directory
  */
 void read() {
-	std::string dir = getDir();
+	const std::string dir = getDir();
 	std::cout << "Data: \n";
 	std::cout << readString(dir) << '\n';
+}
+/**
+ * reads binary data from a file
+ */
+void readBin() {
+	const std::string dir = getDir();
+	std::cout << "Binary:";
+	// space and newline are handled by the for loop
+	const std::vector<bool> bin = readBin(dir);
+	for (int i = 0; i < bin.size(); i++) {
+		if (!(i % 8)) {
+			std::cout << ' ';
+		}
+		if (!(i % (8 * 8))) {
+			std::cout << '\n';
+		}
+		std::cout << bin[i];
+	}
+	std::cout << '\n';
 }
 // /Users/emily/Desktop/test.mscd
 int main() {
@@ -96,7 +131,7 @@ int main() {
 	bool run = true;
 	while (run) {
 		// operation to do
-		int op = getOp();
+		opcode op = getOp();
 		switch (op) {
 		case STOP:
 			// don't run no more
@@ -107,6 +142,9 @@ int main() {
 			break;
 		case WRITE:
 			write();
+			break;
+		case READBIN:
+			readBin();
 			break;
 		default:
 			// error msg
